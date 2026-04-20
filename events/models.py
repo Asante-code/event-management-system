@@ -22,8 +22,8 @@ class Event(models.Model):
                           ("Completed","completed")
                           ]
     title = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
-    description = models.TextField(max_length=500)
+    slug = models.SlugField(unique=True, blank=True)
+    description = models.TextField()
     category = models.CharField(max_length=50, choices=CategoryChoices)
     event_type =models.CharField(max_length=20, choices= event_type_choices)
     organizer_name =models.CharField(max_length=200)
@@ -46,9 +46,15 @@ class Event(models.Model):
       return self.title
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-          self.slug = slugify(self.title)
-        super().save(*args, **kwargs)
+     if not self.slug:
+        base_slug = slugify(self.title)
+        slug = base_slug
+        counter = 1
+        while Event.objects.filter(slug=slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        self.slug = slug
+     super().save(*args, **kwargs)
 
     def is_upcoming(self):
         return self.start_datetime > timezone.now()
